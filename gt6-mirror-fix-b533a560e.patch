@@ -1,0 +1,246 @@
+diff --git a/rpcs3/Emu/RSX/Common/texture_cache.h b/rpcs3/Emu/RSX/Common/texture_cache.h
+index 295090a5b..bc549e83d 100644
+--- a/rpcs3/Emu/RSX/Common/texture_cache.h
++++ b/rpcs3/Emu/RSX/Common/texture_cache.h
+@@ -1849,6 +1849,30 @@ namespace rsx
+ 			for (auto It = m_temporary_subresource_cache.begin(); It != m_temporary_subresource_cache.end();)
+ 			{
+ 				const auto& desc = It->second.first;
++				// GT6 mirror material passes reuse framebuffer-backed temporaries for a
++				// reflection cubemap and a 1x1 lighting/material scalar. Keep these
++				// cache entries alive; the scalar is refreshed through copy_image_dynamic.
++				if (desc.address == 0xc40c0000 &&
++					desc.width == 256 &&
++					desc.height == 256 &&
++					desc.depth == 6 &&
++					desc.op == deferred_request_command::cubemap_unwrap)
++				{
++					++It;
++					continue;
++				}
++
++				if (desc.address == 0xc0000000 &&
++					desc.width == 1 &&
++					desc.height == 1 &&
++					desc.depth == 1 &&
++					(desc.op == deferred_request_command::copy_image_static ||
++					 desc.op == deferred_request_command::copy_image_dynamic))
++				{
++					++It;
++					continue;
++				}
++
+ 				if (range.overlaps(desc.cache_range))
+ 				{
+ 					release_temporary_subresource(It->second.second);
+@@ -1889,7 +1913,15 @@ namespace rsx
+ 				if (auto texptr = m_rtts.get_surface_at(attr.address);
+ 					helpers::check_framebuffer_resource(texptr, attr, extended_dimension))
+ 				{
+-					const bool force_convert = !render_target_format_is_compatible(texptr, attr.gcm_format);
++					// GT6's default HUD mirror can read the color target as a cyclic
++					// framebuffer reference. Force a copy instead of sampling the
++					// still-bound render target directly.
++					const bool force_gt6_mirror_cyclic_color_copy =
++						attr.address == 0xc2200000 &&
++						attr.pitch == 8192 &&
++						!texptr->is_depth_surface();
++
++					const bool force_convert = force_gt6_mirror_cyclic_color_copy || !render_target_format_is_compatible(texptr, attr.gcm_format);
+ 
+ 					auto result = helpers::process_framebuffer_resource_fast<sampled_image_descriptor>(
+ 						cmd, texptr, attr, scale, extended_dimension, remap, true, force_convert);
+@@ -1913,7 +1945,17 @@ namespace rsx
+ 				const auto& last = overlapping_fbos.back();
+ 				if (last.src_area.x == 0 && last.src_area.y == 0 && !last.is_clipped)
+ 				{
+-					const bool force_convert = !render_target_format_is_compatible(last.surface, attr.gcm_format);
++					// Same GT6 default HUD mirror read when resolved through the
++					// surface-cache overlap path rather than the cyclic fast path.
++					const bool force_gt6_mirror_color_copy =
++						attr.address == 0xc2200000 &&
++						attr.width == 475 &&
++						attr.height == 98 &&
++						attr.pitch == 8192 &&
++						!last.is_depth &&
++						last.base_address == attr.address;
++
++					const bool force_convert = force_gt6_mirror_color_copy || !render_target_format_is_compatible(last.surface, attr.gcm_format);
+ 
+ 					return helpers::process_framebuffer_resource_fast<sampled_image_descriptor>(
+ 						cmd, last.surface, attr, scale, extended_dimension, remap, false, force_convert);
+@@ -1922,11 +1964,46 @@ namespace rsx
+ 				return {};
+ 			};
+ 
++			// The GT6 default HUD mirror color target overlaps a later depth target.
++			// Prefer the exact color surface so the mirror samples rendered color.
++			const bool is_gt6_mirror_slot1_like =
++				attr.address == 0xc2200000 &&
++				attr.width == 475 &&
++				attr.height == 98 &&
++				attr.pitch == 8192;
++
++			auto prefer_gt6_mirror_color_overlap = [&]()
++			{
++				if (!is_gt6_mirror_slot1_like ||
++					overlapping_fbos.size() < 2 ||
++					!overlapping_fbos.back().is_depth)
++				{
++					return;
++				}
++
++				for (u32 index = 0; index + 1 < overlapping_fbos.size(); ++index)
++				{
++					auto& candidate = overlapping_fbos[index];
++					if (!candidate.is_depth &&
++						candidate.base_address == attr.address &&
++						candidate.src_area.x == 0 &&
++						candidate.src_area.y == 0 &&
++						candidate.dst_area.x == 0 &&
++						candidate.dst_area.y == 0 &&
++						!candidate.is_clipped)
++					{
++						std::swap(candidate, overlapping_fbos.back());
++						return;
++					}
++				}
++			};
++
+ 			// Check surface cache early if the option is enabled
+ 			if (options.prefer_surface_cache)
+ 			{
+ 				const u16 block_h = (attr.depth * attr.slice_h);
+ 				overlapping_fbos = m_rtts.get_merged_texture_memory_region(cmd, attr.address, attr.width, block_h, attr.pitch, attr.bpp, rsx::surface_access::shader_read);
++				prefer_gt6_mirror_color_overlap();
+ 
+ 				if (!overlapping_fbos.empty())
+ 				{
+@@ -1988,6 +2065,7 @@ namespace rsx
+ 				// Now check for surface cache hits
+ 				const u16 block_h = (attr.depth * attr.slice_h);
+ 				overlapping_fbos = m_rtts.get_merged_texture_memory_region(cmd, attr.address, attr.width, block_h, attr.pitch, attr.bpp, rsx::surface_access::shader_read);
++				prefer_gt6_mirror_color_overlap();
+ 			}
+ 
+ 			if (!overlapping_fbos.empty() || !overlapping_locals.empty())
+diff --git a/rpcs3/Emu/RSX/VK/VKDraw.cpp b/rpcs3/Emu/RSX/VK/VKDraw.cpp
+index 8a6789213..438d7ddba 100644
+--- a/rpcs3/Emu/RSX/VK/VKDraw.cpp
++++ b/rpcs3/Emu/RSX/VK/VKDraw.cpp
+@@ -665,6 +665,115 @@ bool VKGSRender::bind_texture_env()
+ 		if (rsx::method_registers.fragment_textures[i].enabled() &&
+ 			sampler_state->validate())
+ 		{
++			// GT6 mirror material passes for the default HUD rear-view mirror and
++			// cockpit mirrors. Keep this predicate tight; the workaround changes
++			// temporary framebuffer-backed texture lifetime for these passes.
++			const auto is_gt6_mirror_bound_target = [](u32 address)
++			{
++				switch (address)
++				{
++				case 0xc2200000: // Default-view HUD rear-view mirror
++				case 0xc3500000: // Cockpit center mirror
++				case 0xc1320000: // Cockpit side/interior mirror pass
++				case 0xc0660000:
++				case 0xc0cc0000:
++					return true;
++				default:
++					return false;
++				}
++			};
++
++			const auto is_gt6_mirror_surface_offset = [](u32 offset)
++			{
++				switch (offset)
++				{
++				case 0x02200000:
++				case 0x03500000:
++				case 0x01320000:
++				case 0x00660000:
++				case 0x00cc0000:
++					return true;
++				default:
++					return false;
++				}
++			};
++
++			const bool gt6_mirror_like_scissor =
++				(m_scissor.offset.x == 0 &&
++				 m_scissor.offset.y == 0 &&
++				 m_scissor.extent.width >= 470 &&
++				 m_scissor.extent.width <= 480 &&
++				 m_scissor.extent.height >= 95 &&
++				 m_scissor.extent.height <= 100) ||
++				(m_scissor.offset.x == 0 &&
++				 m_scissor.offset.y == 0 &&
++				 m_scissor.extent.width >= 250 &&
++				 m_scissor.extent.width <= 260 &&
++				 m_scissor.extent.height >= 120 &&
++				 m_scissor.extent.height <= 135) ||
++				(m_scissor.offset.x >= 110 &&
++				 m_scissor.offset.x <= 150 &&
++				 m_scissor.offset.y >= 220 &&
++				 m_scissor.offset.y <= 270 &&
++				 m_scissor.extent.width >= 300 &&
++				 m_scissor.extent.width <= 320 &&
++				 m_scissor.extent.height >= 85 &&
++				 m_scissor.extent.height <= 95) ||
++				(m_scissor.offset.x >= 1100 &&
++				 m_scissor.offset.x <= 1150 &&
++				 m_scissor.offset.y >= 380 &&
++				 m_scissor.offset.y <= 430 &&
++				 m_scissor.extent.width >= 140 &&
++				 m_scissor.extent.width <= 150 &&
++				 m_scissor.extent.height >= 140 &&
++				 m_scissor.extent.height <= 155);
++
++			const bool gt6_mirror_material_target =
++				m_rtts.m_bound_depth_stencil.first == 0xc1980000 &&
++				(is_gt6_mirror_bound_target(m_rtts.m_bound_render_targets[0].first) ||
++				 is_gt6_mirror_bound_target(m_rtts.m_bound_render_targets[1].first) ||
++				 is_gt6_mirror_bound_target(m_rtts.m_bound_render_targets[2].first) ||
++				 is_gt6_mirror_bound_target(m_rtts.m_bound_render_targets[3].first) ||
++				 is_gt6_mirror_surface_offset(rsx::method_registers.surface_offset(0)) ||
++				 is_gt6_mirror_surface_offset(rsx::method_registers.surface_offset(1)) ||
++				 is_gt6_mirror_surface_offset(rsx::method_registers.surface_offset(2)) ||
++				 is_gt6_mirror_surface_offset(rsx::method_registers.surface_offset(3)) ||
++				 gt6_mirror_like_scissor);
++
++			// Keep the mirror reflection cubemap temporary cacheable so consecutive
++			// mirror draws use a stable resource identity.
++			const bool gt6_mirror_reflection_cubemap =
++				(i == 14 || i == 15) &&
++				gt6_mirror_material_target &&
++				sampler_state->upload_context == rsx::texture_upload_context::framebuffer_storage &&
++				rsx::method_registers.fragment_textures[i].offset() == 0x040c0000 &&
++				sampler_state->ref_address == 0xc40c0000 &&
++				sampler_state->external_subresource_desc.op == rsx::deferred_request_command::cubemap_unwrap;
++
++			if (gt6_mirror_reflection_cubemap) [[unlikely]]
++			{
++				sampler_state->external_subresource_desc.do_not_cache = false;
++			}
++
++			// The mirror 1x1 lighting/material scalar needs stable identity but
++			// current contents. copy_image_dynamic refreshes cached contents on hits.
++			const bool gt6_mirror_lighting_scalar =
++				i == 12 &&
++				gt6_mirror_material_target &&
++				!!(current_fp_metadata.referenced_textures_mask & ((1u << 14) | (1u << 15))) &&
++				sampler_state->upload_context == rsx::texture_upload_context::framebuffer_storage &&
++				rsx::method_registers.fragment_textures[i].offset() == 0 &&
++				rsx::method_registers.fragment_textures[i].width() == 1 &&
++				rsx::method_registers.fragment_textures[i].height() == 1 &&
++				sampler_state->ref_address == 0xc0000000 &&
++				sampler_state->external_subresource_desc.op == rsx::deferred_request_command::copy_image_static;
++
++			if (gt6_mirror_lighting_scalar) [[unlikely]]
++			{
++				sampler_state->external_subresource_desc.op = rsx::deferred_request_command::copy_image_dynamic;
++				sampler_state->external_subresource_desc.do_not_cache = false;
++			}
++
+ 			if (view = sampler_state->image_handle; !view)
+ 			{
+ 				//Requires update, copy subresource
