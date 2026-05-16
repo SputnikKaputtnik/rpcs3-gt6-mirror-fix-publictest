@@ -21,8 +21,6 @@ Embedded version before patch: 19374-b533a560
 - Default 2D HUD rear-view mirror showing wrong content such as minimap-like data.
 - Car/material flicker in the default HUD mirror and cockpit mirrors.
 
-Terminology note: this is not GT6's bonnet view. GT6 bonnet view has no rear-view mirror in this test case.
-
 ## Visual Comparison
 
 **Video:** [GT6 mirror visual comparison](media/gt6-mirror-visual-comparison.mp4)
