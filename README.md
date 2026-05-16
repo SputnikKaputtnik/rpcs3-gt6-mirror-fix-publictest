@@ -25,9 +25,11 @@ Terminology note: this is not GT6's bonnet view. GT6 bonnet view has no rear-vie
 
 ## Visual Comparison
 
-GitHub does not reliably embed local MP4 files in repository READMEs. Click the preview image to open the comparison video.
+GitHub does not reliably embed local MP4 files in repository READMEs.
 
-[![GT6 mirror visual comparison](media/gt6-mirror-visual-comparison-poster.jpg)](media/gt6-mirror-visual-comparison.mp4)
+**Video:** [GT6 mirror visual comparison](media/gt6-mirror-visual-comparison.mp4)
+
+The same MP4 is also attached to the GitHub release as `gt6-mirror-visual-comparison.mp4`.
 
 The short comparison video below shows:
 
@@ -55,7 +57,6 @@ During local testing, unrelated full-screen flicker was traced to configuration 
 - `gt6-mirror-fix-b533a560e.patch` - source diff against the base commit.
 - `gt6_mirror_public_testing.md` - test notes, known limits, and cross-checks.
 - `media/gt6-mirror-visual-comparison.mp4` - before/after comparison video.
-- `media/gt6-mirror-visual-comparison-poster.jpg` - visible README preview for the comparison video.
 - `SHA256SUMS.txt` - hashes for the release payload.
 - `LICENSE-RPCS3-GPLv2.txt` - RPCS3 license text copied from the base source tree.
 
