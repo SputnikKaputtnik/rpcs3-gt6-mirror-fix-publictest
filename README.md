@@ -65,8 +65,8 @@ The executable and ZIP package are attached to the GitHub release, not committed
 
 ## Cross-Checks
 
-- Gran Turismo 5 Prologue: rear-view mirror path appears different; GT6 mirror bugs not observed.
-- Need for Speed Shift: rear-view mirror path appears different; GT6 mirror bugs not observed.
+- Gran Turismo 5 Prologue: rear-view mirror path appears different; GT6 mirror bugs not observed; no visible regressions.
+- Need for Speed Shift: rear-view mirror path appears different; GT6 mirror bugs not observed; no visible regressions.
 
 ## Source Availability
 
