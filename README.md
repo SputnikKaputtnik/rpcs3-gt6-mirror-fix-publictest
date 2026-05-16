@@ -25,13 +25,9 @@ Terminology note: this is not GT6's bonnet view. GT6 bonnet view has no rear-vie
 
 ## Visual Comparison
 
-GitHub does not reliably embed local MP4 files in repository READMEs.
-
 **Video:** [GT6 mirror visual comparison](media/gt6-mirror-visual-comparison.mp4)
 
-The same MP4 is also attached to the GitHub release as `gt6-mirror-visual-comparison.mp4`.
-
-The short comparison video below shows:
+The short comparison video shows:
 
 - the default HUD mirror sampling the track map texture
 - cockpit mirror car-surface flicker on unpatched master
