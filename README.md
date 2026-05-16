@@ -23,6 +23,13 @@ Embedded version before patch: 19374-b533a560
 
 ## Visual Comparison
 
+<table>
+  <tr>
+    <td><img src="media/screenshots/gt6-default-mirror-before-minimap-captioned.png" alt="Before - HUD mirror samples the track map texture"></td>
+    <td><img src="media/screenshots/gt6-default-mirror-after-fixed-captioned.png" alt="After - HUD mirror renders correctly"></td>
+  </tr>
+</table>
+
 **Video:** [GT6 mirror visual comparison](media/gt6-mirror-visual-comparison.mp4)
 
 The short comparison video shows:
