@@ -25,6 +25,10 @@ Terminology note: this is not GT6's bonnet view. GT6 bonnet view has no rear-vie
 
 ## Visual Comparison
 
+<video src="media/gt6-mirror-visual-comparison.mp4" controls muted width="100%"></video>
+
+[![GT6 mirror visual comparison](media/gt6-mirror-visual-comparison-poster.jpg)](media/gt6-mirror-visual-comparison.mp4)
+
 The short comparison video below shows:
 
 - the default HUD mirror sampling the track map texture
@@ -32,7 +36,7 @@ The short comparison video below shows:
 - the observation that the surface flicker stops inside tunnels
 - the experimental patched build rendering the HUD and cockpit mirrors stably
 
-[Watch the GT6 mirror visual comparison](media/gt6-mirror-visual-comparison.mp4)
+[Open the MP4 directly](media/gt6-mirror-visual-comparison.mp4)
 
 ## Recommended GT6 Test Config
 
@@ -51,6 +55,7 @@ During local testing, unrelated full-screen flicker was traced to configuration 
 - `gt6-mirror-fix-b533a560e.patch` - source diff against the base commit.
 - `gt6_mirror_public_testing.md` - test notes, known limits, and cross-checks.
 - `media/gt6-mirror-visual-comparison.mp4` - before/after comparison video.
+- `media/gt6-mirror-visual-comparison-poster.jpg` - visible README preview for the comparison video.
 - `SHA256SUMS.txt` - hashes for the release payload.
 - `LICENSE-RPCS3-GPLv2.txt` - RPCS3 license text copied from the base source tree.
 
