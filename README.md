@@ -80,4 +80,4 @@ https://github.com/RPCS3/rpcs3
 
 ## AI Transparency
 
-This experiment was developed collaboratively by the tester and OpenAI Codex/ChatGPT. See `AI_TRANSPARENCY.md`.
+This experiment was developed collaboratively by SputnikKaputtnik and OpenAI Codex/ChatGPT. See `AI_TRANSPARENCY.md`.
