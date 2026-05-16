@@ -25,7 +25,7 @@ Terminology note: this is not GT6's bonnet view. GT6 bonnet view has no rear-vie
 
 ## Visual Comparison
 
-<video src="media/gt6-mirror-visual-comparison.mp4" controls muted width="100%"></video>
+GitHub does not reliably embed local MP4 files in repository READMEs. Click the preview image to open the comparison video.
 
 [![GT6 mirror visual comparison](media/gt6-mirror-visual-comparison-poster.jpg)](media/gt6-mirror-visual-comparison.mp4)
 
