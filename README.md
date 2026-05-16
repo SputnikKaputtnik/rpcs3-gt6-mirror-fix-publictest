@@ -38,8 +38,6 @@ The short comparison video below shows:
 - the observation that the surface flicker stops inside tunnels
 - the experimental patched build rendering the HUD and cockpit mirrors stably
 
-[Open the MP4 directly](media/gt6-mirror-visual-comparison.mp4)
-
 ## Recommended GT6 Test Config
 
 ```text
