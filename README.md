@@ -23,6 +23,17 @@ Embedded version before patch: 19374-b533a560
 
 Terminology note: this is not GT6's bonnet view. GT6 bonnet view has no rear-view mirror in this test case.
 
+## Visual Comparison
+
+The short comparison video below shows:
+
+- the default HUD mirror sampling the track map texture
+- cockpit mirror car-surface flicker on unpatched master
+- the observation that the surface flicker stops inside tunnels
+- the experimental patched build rendering the HUD and cockpit mirrors stably
+
+[Watch the GT6 mirror visual comparison](media/gt6-mirror-visual-comparison.mp4)
+
 ## Recommended GT6 Test Config
 
 ```text
@@ -39,6 +50,7 @@ During local testing, unrelated full-screen flicker was traced to configuration 
 
 - `gt6-mirror-fix-b533a560e.patch` - source diff against the base commit.
 - `gt6_mirror_public_testing.md` - test notes, known limits, and cross-checks.
+- `media/gt6-mirror-visual-comparison.mp4` - before/after comparison video.
 - `SHA256SUMS.txt` - hashes for the release payload.
 - `LICENSE-RPCS3-GPLv2.txt` - RPCS3 license text copied from the base source tree.
 

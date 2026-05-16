@@ -16,6 +16,10 @@ Intended fixes:
 - Default 2D HUD rear-view mirror wrong-content/minimap-like artifact.
 - Car/material flicker in default HUD and cockpit mirrors.
 
+Visual comparison:
+
+- `gt6-mirror-visual-comparison.mp4` shows the original HUD mirror wrong-content issue, cockpit mirror surface flicker on unpatched master, the tunnel observation, and the experimental patched result.
+
 Recommended GT6 config:
 
 ```text
