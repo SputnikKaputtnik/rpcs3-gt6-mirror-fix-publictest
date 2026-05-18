@@ -46,7 +46,7 @@ Read Color Buffers: true
 Write Color Buffers: true
 Asynchronous Texture Streaming: true
 Multithreaded RSX: true
-Resolution Scale: 200
+Resolution Scale: 200 (100 causes issues in replay even in current Alpha master!)
 ```
 
 During local testing, unrelated full-screen flicker was traced to configuration and disappeared with the settings above.
