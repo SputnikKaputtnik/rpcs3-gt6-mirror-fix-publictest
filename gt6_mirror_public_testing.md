@@ -64,7 +64,7 @@ Read Color Buffers: true
 Write Color Buffers: true
 Asynchronous Texture Streaming: true
 Multithreaded RSX: true
-Resolution Scale: 100
+Resolution Scale: 200 (100 causes issues in replay even in current Alpha master!)
 ```
 
 ## First Public-Test Result
